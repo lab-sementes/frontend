@@ -27,7 +27,7 @@ async function carregarSensores() {
         console.error(error);
         const tbody = document.getElementById('lista-sensores-body');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Erro ao carregar sensores. Verifique a API.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Erro ao carregar sensores. Verifique a API.</td></tr>';
         }
     }
 }
@@ -39,7 +39,7 @@ function renderizarTabela(sensores) {
     tbody.innerHTML = '';
 
     if (!Array.isArray(sensores) || sensores.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum sensor cadastrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum sensor cadastrado.</td></tr>';
         return;
     }
 
@@ -47,6 +47,18 @@ function renderizarTabela(sensores) {
         const tr = document.createElement('tr');
         const isAtivo = s.status === 'Ativado';
         const statusClass = isAtivo ? 'badge-ativo' : 'badge-inativo';
+
+        // Formatação dos limites
+        const isGeladeira = s.sensorType === 'DS18B20' || (s.sensorName || '').toLowerCase().includes('geladeira');
+        const tMin = s.tempMin !== null && s.tempMin !== undefined ? s.tempMin : (isGeladeira ? 2.0 : 18.0);
+        const tMax = s.tempMax !== null && s.tempMax !== undefined ? s.tempMax : (isGeladeira ? 8.0 : 24.0);
+        const uMin = s.umidMin !== null && s.umidMin !== undefined ? s.umidMin : (isGeladeira ? null : 40.0);
+        const uMax = s.umidMax !== null && s.umidMax !== undefined ? s.umidMax : (isGeladeira ? null : 60.0);
+
+        let textoLimites = `${tMin}°C a ${tMax}°C`;
+        if (uMin !== null && uMax !== null) {
+            textoLimites += ` (${uMin}% a ${uMax}%)`;
+        }
 
         // Botão de ação (se desativado, permite reativar; se ativo, permite desativar)
         const btnStatusAcao = isAtivo 
@@ -61,6 +73,7 @@ function renderizarTabela(sensores) {
             <td><strong>${escapeHtml(s.sensorName)}</strong></td>
             <td>${escapeHtml(s.sensorType || '-')}</td>
             <td>${escapeHtml(s.sala || '-')}</td>
+            <td><small style="color: #475569; font-weight: 500;">${escapeHtml(textoLimites)}</small></td>
             <td><span class="badge ${statusClass}">${escapeHtml(s.status)}</span></td>
             <td>
                 <button class="action-btn edit-btn" onclick="preencherEdicaoPorId(${s.id})" title="Editar">
