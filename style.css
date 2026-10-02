@@ -1,14 +1,21 @@
 /* ==========================================================================
-   CONFIGURAÇÕES GLOBAIS
+   CONFIGURAÇÕES GLOBAIS E VARIÁVEIS
    ========================================================================== */
 :root {
     --cor-primaria: #002f6c;
-    --cor-fundo: #f4f7fa;
-    --cor-fundo-header: #ffffff;
-    --cor-texto: #333;
-    --cor-sombra: rgba(0, 0, 0, 0.08);
-    --cor-borda: #e0e0e0;
-    --cor-vermelho-alerta: #d9534f;
+    --cor-primaria-hover: #00459e;
+    --cor-fundo: #f8fafc;
+    --cor-fundo-card: #ffffff;
+    --cor-texto: #1e293b;
+    --cor-texto-suave: #64748b;
+    --cor-sombra: rgba(0, 0, 0, 0.05);
+    --cor-borda: #e2e8f0;
+    --cor-vermelho: #ef4444;
+    --cor-vermelho-fundo: #fef2f2;
+    --cor-verde: #10b981;
+    --cor-verde-fundo: #ecfdf5;
+    --cor-amarelo: #f59e0b;
+    --cor-amarelo-fundo: #fffbeb;
     --cor-verde-setrem: #00be6e;
 }
 
@@ -17,16 +24,22 @@ body {
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
     margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+button i, .room-btn i, .filtro-btn i, a i, .modo-btn i, .chip-btn i {
+    pointer-events: none;
 }
 
 /* ==========================================================================
-   CONFIGURAÇÕES DO HEADER
+   CABEÇALHO
    ========================================================================== */
 header {
-    background-color: var(--cor-fundo-header);
-    padding: 15px 30px;
+    background-color: var(--cor-fundo-card);
+    padding: 12px 24px;
     border-bottom: 1px solid var(--cor-borda);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 .header-content {
@@ -40,61 +53,53 @@ header {
 
 .header-content h1 {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: var(--cor-verde-setrem);
     text-align: center;
-    font-weight: bold;
-    white-space: nowrap;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
 }
 
 .header-content-logo { 
-    height: 30px; 
+    height: 32px; 
     width: auto; 
     justify-self: start;
 }
 
 .header-content-actions {
     justify-self: end;
-    display: flex;
-    gap: 10px;
 }
 
 .header-content-actions-config-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 1.5rem;
-    color: var(--cor-primaria);
-    background: transparent;
-    transition: transform 0.2s, color 0.2s;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto-suave);
+    background: #ffffff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    transition: all 0.2s ease;
 }
 
 .header-content-actions-config-button:hover {
-    color: var(--cor-verde-setrem);
-    transform: scale(1.1);
-}
-
-.header-content-actions-config-button:active {
-    transform: scale(0.95);
-}
-
-.header-content-actions-config-button a {
-    color: inherit;
-    text-decoration: none;   
+    color: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+    background-color: #f1f5f9;
 }
 
 /* ==========================================================================
-   CONFIGURAÇÕES DO MENU DE SENSORES
+   SELEÇÃO DE SALAS E STATUS
    ========================================================================== */
-
-
-
 .room-selector-container {
     max-width: 1400px;
-    margin: 20px auto 0 auto;
+    margin: 18px auto 0 auto;
     padding: 0 20px;
     display: flex;
     justify-content: space-between;
@@ -103,122 +108,565 @@ header {
     gap: 15px;
 }
 
-.room-selector-container h2 {
+.room-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.room-header-info h2 {
     margin: 0;
-    color: #333;
-    font-size: 1.5rem;
+    color: #0f172a;
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+.sensor-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-online {
+    background-color: var(--cor-verde-fundo);
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.status-online .status-dot {
+    background-color: var(--cor-verde);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.status-alerta {
+    background-color: var(--cor-amarelo-fundo);
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.status-alerta .status-dot {
+    background-color: var(--cor-amarelo);
+}
+
+.status-offline {
+    background-color: var(--cor-vermelho-fundo);
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.status-offline .status-dot {
+    background-color: var(--cor-vermelho);
 }
 
 .room-selector {
     display: flex;
-    gap: 10px;
-    background-color: #e9ecef;
+    gap: 6px;
+    background-color: #e2e8f0;
     border-radius: 10px;
-    padding: 5px;
+    padding: 4px;
 }
 
 .room-btn {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    padding: 8px 18px;
     border: none;
-    border-radius: 8px;
+    border-radius: 7px;
     background-color: transparent;
-    color: #555;
+    color: #475569;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease;
 }
 
 .room-btn i {
-    margin-right: 8px;
+    margin-right: 6px;
 }
 
 .room-btn:hover {
-    background-color: #f8f9fa;
+    color: #0f172a;
 }
 
 .room-btn.active {
     background-color: #ffffff;
     color: var(--cor-primaria);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
-/* 4. Layout do Dashboard (3 Colunas) */
+/* ==========================================================================
+   AVISO AMIGÁVEL DE SEM SINAL (SIMPLES E DIRETO)
+   ========================================================================== */
+.aviso-amigavel {
+    max-width: 1400px;
+    margin: 14px auto 0 auto;
+    padding: 12px 18px;
+    background-color: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-left: 4px solid var(--cor-amarelo);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #92400e;
+    font-size: 0.88rem;
+    box-sizing: border-box;
+}
+
+.aviso-amigavel i {
+    font-size: 1.3rem;
+    color: var(--cor-amarelo);
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   SELETOR DE EQUIPAMENTOS (GELADEIRAS E AMBIENTE)
+   ========================================================================== */
+.sensor-tabs-container {
+    max-width: 1400px;
+    margin: 14px auto 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sensor-tabs-label {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sensor-tabs-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sensor-tab-btn {
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: 1px solid var(--cor-borda);
+    background-color: #ffffff;
+    color: #334155;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sensor-tab-btn:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.sensor-tab-btn.active {
+    background-color: var(--cor-primaria);
+    color: #ffffff;
+    border-color: var(--cor-primaria);
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 47, 108, 0.2);
+}
+
+/* ==========================================================================
+   LAYOUT PRINCIPAL
+   ========================================================================== */
 .dashboard-container {
     display: flex;
     flex-wrap: wrap; 
-    padding: 20px;
+    padding: 16px 20px;
     gap: 20px;
     max-width: 1400px;
-    margin: 10px auto 0 auto; /* Margem superior reduzida */
+    margin: 0 auto 30px auto;
 }
 
-/* Coluna Central */
 .coluna-graficos {
-    flex: 2;
-    min-width: 400px;
+    flex: 2.3;
+    min-width: 480px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
 }
 
-/* Colunas Laterais */
-.coluna-alertas,
 .coluna-estatisticas {
     flex: 1; 
-    min-width: 300px;
+    min-width: 310px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-self: flex-start;
+}
+
+.coluna-estatisticas h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   BARRA DE CONTROLES: PERÍODO E ALTERNADOR DE VISÃO
+   ========================================================================== */
+.controles-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
     background-color: #ffffff;
-    border-radius: 12px;
+    padding: 10px 16px;
+    border-radius: 10px;
     border: 1px solid var(--cor-borda);
-    box-shadow: 0 4px 15px var(--cor-sombra);
-    padding: 20px;
-    align-self: flex-start; 
 }
 
-/* 5. Estilos Específicos das Colunas */
-
-/* Coluna de Gráficos (B) */
-.filtros-grafico { display: flex; gap: 10px; margin-bottom: 10px; }
-.filtro-btn { flex-grow: 1; padding: 10px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--cor-borda); background-color: #f9f9f9; color: #555; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-.filtro-btn:hover { background-color: #e9e9e9; }
-.filtro-btn.active { background-color: var(--cor-primaria); color: #ffffff; border-color: var(--cor-primaria); }
-
-.grafico-wrapper { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px var(--cor-sombra); border: 1px solid var(--cor-borda); padding: 25px; width: 100%; box-sizing: border-box; }
-.grafico-wrapper h2 { text-align: center; font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 20px; margin-top: 0; }
-
-/* Coluna de Alertas (C) */
-.coluna-alertas h2,
-.coluna-estatisticas h2 { text-align: center; font-size: 1.3rem; font-weight: 600; color: #333; margin-top: 0; margin-bottom: 20px; }
-.log-alertas-wrapper { max-height: 600px; overflow-y: auto; }
-#lista-alertas { list-style: none; padding: 0; margin: 0; }
-#lista-alertas li { padding: 10px; border-bottom: 1px solid var(--cor-borda); font-size: 0.9rem; line-height: 1.4; }
-#lista-alertas li:first-child { border-top: 1px solid var(--cor-borda); }
-.alerta-info { color: #555; }
-.alerta-aviso { color: #8a6d3b; background-color: #fcf8e3; }
-.alerta-critico { color: #a94442; background-color: #f2dede; font-weight: 600; }
-
-/* Coluna de Estatísticas (A) */
-.card { display: flex; align-items: center; gap: 20px; border: 1px solid var(--cor-borda); border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: all 0.3s ease; }
-.card:hover { transform: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
-.card .card-icon { font-size: 2.5rem; color: var(--cor-primaria); }
-.card .card-content { flex-grow: 1; }
-.card h2 { font-size: 1.1rem; font-weight: 400; margin: 0 0 5px 0; }
-.card .dado { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); margin: 0; }
-
-/* Alerta no Card (quando fora da ISO) */
-.card.alerta-iso {
-    background-color: #fff4f4;
-    border-color: #ffb8b8;
-}
-.card.alerta-iso .card-icon, 
-.card.alerta-iso .dado { 
-    color: var(--cor-vermelho-alerta); 
+.filtros-grafico {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.card-estatistica { background-color: #fdfdfd; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.card-estatistica h3 { margin: 0; font-size: 0.95rem; font-weight: 400; color: #444; }
-.card-estatistica p { margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--cor-primaria); }
+.filtro-rotulo {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 4px;
+}
 
+.filtro-btn {
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    border: 1px solid var(--cor-borda);
+    background-color: #f8fafc;
+    color: #475569;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
 
-@media (max-width: 1100px) { .dashboard-container { flex-direction: column; } }
+.filtro-btn:hover {
+    background-color: #edf2f7;
+}
+
+.filtro-btn.active {
+    background-color: var(--cor-primaria);
+    color: #ffffff;
+    border-color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   CARTÕES DOS GRÁFICOS
+   ========================================================================== */
+.grafico-wrapper { 
+    background-color: var(--cor-fundo-card); 
+    border-radius: 12px; 
+    box-shadow: 0 2px 10px var(--cor-sombra); 
+    border: 1px solid var(--cor-borda); 
+    padding: 20px 22px; 
+    margin-bottom: 18px;
+    box-sizing: border-box; 
+}
+
+.grafico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.grafico-header h2 { 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    color: #0f172a; 
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.faixa-legenda {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    background-color: #f1f5f9;
+    color: #334155;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   CARDS DE LEITURA ATUAL NA LATERAL
+   ========================================================================== */
+.card-leitura-item {
+    background-color: #ffffff;
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 1px 3px var(--cor-sombra);
+}
+
+.card-leitura-item:hover {
+    border-color: var(--cor-primaria);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 47, 108, 0.08);
+}
+
+.card-leitura-item.selecionado {
+    border-color: var(--cor-primaria);
+    background-color: #f8fafd;
+    border-left: 4px solid var(--cor-primaria);
+}
+
+.card-leitura-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.card-leitura-nome {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-leitura-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+
+.card-leitura-tag.ok {
+    background-color: var(--cor-verde-fundo);
+    color: #065f46;
+}
+
+.card-leitura-tag.alerta {
+    background-color: var(--cor-vermelho-fundo);
+    color: #991b1b;
+}
+
+.card-leitura-valores {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.card-leitura-temp {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--cor-primaria);
+    line-height: 1.1;
+}
+
+.card-leitura-umid {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0284c7;
+}
+
+/* ==========================================================================
+   RESUMO DO PERÍODO
+   ========================================================================== */
+.resumo-painel {
+    background-color: #ffffff;
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 3px var(--cor-sombra);
+}
+
+.resumo-painel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.resumo-painel-header h3 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-resumo-ok {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: var(--cor-verde-fundo);
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.resumo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 0.85rem;
+}
+
+.resumo-label {
+    color: var(--cor-texto-suave);
+}
+
+.resumo-valor {
+    color: #0f172a;
+}
+
+.resumo-duplo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 6px;
+}
+
+.resumo-subitem {
+    display: flex;
+    flex-direction: column;
+}
+
+.sub-label {
+    font-size: 0.72rem;
+    color: var(--cor-texto-suave);
+}
+
+.sub-valor {
+    font-size: 0.95rem;
+    color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+.resumo-divisor {
+    height: 1px;
+    background-color: #f1f5f9;
+    margin: 10px 0;
+}
+
+.dica-laboratorio {
+    font-size: 0.78rem;
+    color: #64748b;
+    background-color: #f8fafc;
+    border: 1px dashed var(--cor-borda);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dica-laboratorio i {
+    color: var(--cor-amarelo);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
+@media (max-width: 1100px) { 
+    .dashboard-container { flex-direction: column; } 
+    .coluna-graficos, .coluna-estatisticas { min-width: 100%; }
+}
+
+@media (max-width: 650px) {
+    header { padding: 10px 16px; }
+    .header-content h1 { font-size: 1.2rem; }
+    .room-selector-container { flex-direction: column; align-items: stretch; }
+    .room-selector { width: 100%; }
+    .room-btn { flex: 1; text-align: center; }
+    .controles-barra { flex-direction: column; align-items: stretch; }
+    .filtros-grafico { width: 100%; justify-content: space-between; }
+}
+
+/* ==========================================================================
+   ESTADO VAZIO DO GRÁFICO (QUANDO APARELHO ESTÁ SEM SINAL RECENTE)
+   ========================================================================== */
+.grafico-vazio-aviso {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--cor-texto-suave);
+    background-color: #f8fafc;
+    border: 1px dashed var(--cor-borda);
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.grafico-vazio-aviso i {
+    font-size: 2.4rem;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.grafico-vazio-aviso p {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0 0 6px 0;
+}
+
+.grafico-vazio-aviso span {
+    font-size: 0.86rem;
+    color: #64748b;
+}
+
+.btn-link-historico {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 8px 16px;
+    background-color: #ffffff;
+    border: 1px solid var(--cor-primaria);
+    color: var(--cor-primaria);
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-link-historico:hover {
+    background-color: #f0f4f9;
+}
