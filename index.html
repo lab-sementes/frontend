@@ -89,6 +89,16 @@
                     <button class="filtro-btn active" data-periodo="24h">24 horas</button>
                     <button class="filtro-btn" data-periodo="7d">7 dias</button>
                 </div>
+
+                <!-- Alternador entre Gráficos e Tabela -->
+                <div class="modo-tabs">
+                    <button class="modo-btn active" id="btn-modo-graficos" data-modo="graficos">
+                        <i class="fa-solid fa-chart-line"></i> Gráficos
+                    </button>
+                    <button class="modo-btn" id="btn-modo-tabela" data-modo="tabela">
+                        <i class="fa-solid fa-table-list"></i> Tabela de Horários
+                    </button>
+                </div>
             </div>
 
             <!-- VISÃO 1: GRÁFICOS -->
@@ -128,6 +138,45 @@
                     </div>
 
                     <canvas id="grafico-umidade"></canvas>
+                </div>
+            </div>
+
+            <!-- VISÃO 2: TABELA DE HORÁRIOS -->
+            <div id="visao-tabela" style="display: none;">
+                <div class="tabela-historico-wrapper">
+                    <div class="tabela-header">
+                        <div>
+                            <h2><i class="fa-solid fa-clipboard-list"></i> Registros de Horários e Medições</h2>
+                            <p class="tabela-subtitulo" id="tabela-subtitulo">Consulte os valores pontuais registrados pelo sistema</p>
+                        </div>
+                        <div class="tabela-actions">
+                            <button id="toggle-ordem-btn" class="action-btn-outline" title="Inverter ordem dos horários">
+                                <i class="fa-solid fa-arrow-down-short-wide"></i> <span id="ordem-text">Mais recentes primeiro</span>
+                            </button>
+                            <button id="exportar-csv-btn" class="action-btn-primary" title="Baixar relatório para o Excel">
+                                <i class="fa-solid fa-file-excel"></i> Baixar Planilha (Excel)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tabela-scroll">
+                        <table class="tabela-dados">
+                            <thead>
+                                <tr>
+                                    <th>Horário</th>
+                                    <th>Local / Geladeira</th>
+                                    <th>Temperatura</th>
+                                    <th>Umidade</th>
+                                    <th>Situação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-historico-body">
+                                <tr>
+                                    <td colspan="5" class="tabela-vazia">Carregando registros...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

@@ -28,8 +28,11 @@ let salasCadastradas = {}; // Mapeamento dinâmico de todas as salas
 let salaAtual = 'geladeiras';
 let subSensorAtual = 'todos'; // 'todos' ou ID do sensor
 let periodoAtual = '24h';
+let modoVisaoAtual = 'graficos'; // 'graficos' ou 'tabela'
+let ordemTabelaRecente = true;
 let consultandoHistoricoQueda = false;
 
+let dadosTabelaAtual = [];
 let leiturasAtuaisCache = {};
 
 let graficoTemp = null;
@@ -55,7 +58,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             destruirGraficos();
             atualizarDashboard();
         });
-    });    // 3. Botão para ver medições gravadas antes da queda (no estado vazio)
+    });
+
+    // 3. Alternador de Visão (Gráficos vs Tabela)
+    document.querySelectorAll('.modo-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const botao = e.currentTarget;
+            document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('active'));
+            botao.classList.add('active');
+
+            modoVisaoAtual = botao.dataset.modo;
+            alternarVisao();
+        });
+    });
+
+    // 4. Inversão de Ordem da Tabela
+    const btnToggleOrdem = document.getElementById('toggle-ordem-btn');
+    if (btnToggleOrdem) {
+        btnToggleOrdem.addEventListener('click', () => {
+            ordemTabelaRecente = !ordemTabelaRecente;
+            const ordemText = document.getElementById('ordem-text');
+            const icon = btnToggleOrdem.querySelector('i');
+            
+            if (ordemTabelaRecente) {
+                ordemText.innerText = 'Mais recentes primeiro';
+                icon.className = 'fa-solid fa-arrow-down-short-wide';
+            } else {
+                ordemText.innerText = 'Mais antigos primeiro';
+                icon.className = 'fa-solid fa-arrow-up-wide-short';
+            }
+            renderizarTabelaHistorica();
+        });
+    }
+
+    // 5. Botão de Exportação para Excel
+    const btnExportarCSV = document.getElementById('exportar-csv-btn');
+    if (btnExportarCSV) {
+        btnExportarCSV.addEventListener('click', exportarPlanilhaExcel);
+    }
+
+    // 6. Botão para ver medições gravadas antes da queda (no estado vazio)
     const btnHistoricoAntigo = document.getElementById('btn-carregar-historico-antigo');
     if (btnHistoricoAntigo) {
         btnHistoricoAntigo.addEventListener('click', () => {
@@ -83,6 +125,26 @@ function destruirGraficos() {
     if (graficoUmid) {
         graficoUmid.destroy();
         graficoUmid = null;
+    }
+}
+
+// ==========================================================================
+// ALTERNAR ENTRE GRÁFICOS E TABELA
+// ==========================================================================
+function alternarVisao() {
+    const visaoGraficos = document.getElementById('visao-graficos');
+    const visaoTabela = document.getElementById('visao-tabela');
+
+    if (!visaoGraficos || !visaoTabela) return;
+
+    if (modoVisaoAtual === 'tabela') {
+        visaoGraficos.style.display = 'none';
+        visaoTabela.style.display = 'block';
+    } else {
+        visaoGraficos.style.display = 'block';
+        visaoTabela.style.display = 'none';
+        if (graficoTemp) graficoTemp.resize();
+        if (graficoUmid) graficoUmid.resize();
     }
 }
 
@@ -575,6 +637,8 @@ async function carregarDadosComparativoGeladeiras(sensores, bucket) {
         const hums = sensorAmbiente.dadosCronologicos.map(d => d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null);
         renderizarGraficoUmidade(labelsUmid, hums, infoSala);
     }
+
+    montarTabelaMultiplos(resultados, infoSala);
     calcularResumoGeral(resultados, infoSala, true);
 }
 
@@ -665,6 +729,8 @@ async function carregarDadosEquipamentoIndividual(sensorObj, bucket) {
     if (!isGeladeira) {
         renderizarGraficoUmidade(labels, hums, infoSala);
     }
+
+    montarTabelaIndividual(historicoFiltrado, nomeAmigavel, infoSala, isGeladeira);
     calcularResumoIndividual(temps, hums, infoSala, isGeladeira);
 }
 
@@ -679,6 +745,7 @@ function mostrarEstadoVazio(sensorObj) {
         avisoTempVazio.style.display = 'block';
         document.getElementById('texto-grafico-temp-vazio').innerText = 'Nenhuma medição encontrada.';
     }
+    exibirTabelaVazia('Nenhum dado registrado para este sensor.');
     atualizarPainelResumo([], [], 0, 0, false);
 }
 
@@ -887,6 +954,134 @@ function renderizarGraficoUmidade(labels, dataHum, infoSala) {
             }
         }
     });
+}
+
+// ==========================================================================
+// TABELA DE HORÁRIOS E EXPORTAÇÃO
+// ==========================================================================
+function montarTabelaMultiplos(resultados, infoSala) {
+    dadosTabelaAtual = [];
+
+    resultados.forEach(r => {
+        const nomeAmigavel = obterNomeAmigavel(r.sensor);
+        const temUmid = r.sensor.sensorType !== 'DS18B20';
+
+        r.dadosCronologicos.forEach(d => {
+            const temp = d.media !== null ? Number(d.media.toFixed(1)) : null;
+            const umid = temUmid && d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null;
+
+            let situacao = 'Normal';
+            let fora = false;
+
+            if (temp !== null) {
+                if (temp < infoSala.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
+                if (temp > infoSala.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
+            }
+
+            dadosTabelaAtual.push({
+                timestamp: d.hora,
+                dataHoraFormatada: formatarDataHoraAmigavel(d.hora),
+                local: nomeAmigavel,
+                temperatura: temp !== null ? `${temp} °C` : '--',
+                umidade: temUmid ? (umid !== null ? `${umid} %` : '--') : 'N/A',
+                isConforme: !fora,
+                situacao
+            });
+        });
+    });
+
+    renderizarTabelaHistorica();
+}
+
+function montarTabelaIndividual(historicoFiltrado, nomeEquipamento, infoSala, isGeladeira) {
+    dadosTabelaAtual = historicoFiltrado.map(d => {
+        const temp = d.media !== null ? Number(d.media.toFixed(1)) : null;
+        const umid = !isGeladeira && d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null;
+
+        let situacao = 'Normal';
+        let fora = false;
+
+        if (temp !== null) {
+            if (temp < infoSala.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
+            if (temp > infoSala.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
+        }
+
+        return {
+            timestamp: d.hora,
+            dataHoraFormatada: formatarDataHoraAmigavel(d.hora),
+            local: nomeEquipamento,
+            temperatura: temp !== null ? `${temp} °C` : '--',
+            umidade: !isGeladeira ? (umid !== null ? `${umid} %` : '--') : 'N/A',
+            isConforme: !fora,
+            situacao
+        };
+    });
+
+    renderizarTabelaHistorica();
+}
+
+function renderizarTabelaHistorica() {
+    const tbody = document.getElementById('tabela-historico-body');
+    if (!tbody) return;
+
+    if (!dadosTabelaAtual || dadosTabelaAtual.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="tabela-vazia">Nenhum registro para o período.</td></tr>';
+        return;
+    }
+
+    const dadosOrdenados = [...dadosTabelaAtual].sort((a, b) => {
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return ordemTabelaRecente ? (timeB - timeA) : (timeA - timeB);
+    });
+
+    tbody.innerHTML = '';
+    dadosOrdenados.slice(0, 100).forEach(dado => {
+        const tr = document.createElement('tr');
+        if (!dado.isConforme) tr.className = 'linha-anomalia';
+
+        const badgeClass = dado.isConforme ? 'badge-conforme' : 'badge-fora';
+        const badgeIcon = dado.isConforme ? 'fa-check' : 'fa-triangle-exclamation';
+
+        tr.innerHTML = `
+            <td><strong>${dado.dataHoraFormatada}</strong></td>
+            <td>${dado.local}</td>
+            <td>${dado.temperatura}</td>
+            <td>${dado.umidade}</td>
+            <td>
+                <span class="badge-status-tabela ${badgeClass}">
+                    <i class="fa-solid ${badgeIcon}"></i> ${dado.situacao}
+                </span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function exibirTabelaVazia(msg) {
+    const tbody = document.getElementById('tabela-historico-body');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="tabela-vazia">${msg}</td></tr>`;
+}
+
+function exportarPlanilhaExcel() {
+    if (!dadosTabelaAtual || dadosTabelaAtual.length === 0) {
+        alert('Não há registros para baixar no período selecionado.');
+        return;
+    }
+
+    let csv = 'Horario;Local / Equipamento;Temperatura;Umidade;Situacao\n';
+    dadosTabelaAtual.forEach(d => {
+        csv += `"${d.dataHoraFormatada}";"${d.local}";"${d.temperatura}";"${d.umidade}";"${d.situacao}"\n`;
+    });
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio_laboratorio_${salaAtual}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ==========================================================================

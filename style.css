@@ -378,6 +378,42 @@ header {
     font-weight: 600;
 }
 
+/* Alternador entre Gráficos e Tabela */
+.modo-tabs {
+    display: flex;
+    gap: 4px;
+    background-color: #f1f5f9;
+    padding: 3px;
+    border-radius: 8px;
+}
+
+.modo-btn {
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.modo-btn:hover {
+    color: #0f172a;
+}
+
+.modo-btn.active {
+    background-color: #ffffff;
+    color: var(--cor-primaria);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 /* ==========================================================================
    CARTÕES DOS GRÁFICOS
    ========================================================================== */
@@ -418,6 +454,157 @@ header {
     color: #334155;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   TABELA COM HORÁRIOS
+   ========================================================================== */
+.tabela-historico-wrapper {
+    background-color: var(--cor-fundo-card);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px var(--cor-sombra);
+    border: 1px solid var(--cor-borda);
+    padding: 20px 22px;
+}
+
+.tabela-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 14px;
+}
+
+.tabela-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tabela-subtitulo {
+    font-size: 0.82rem;
+    color: var(--cor-texto-suave);
+    margin: 0;
+}
+
+.tabela-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.action-btn-outline {
+    font-family: inherit;
+    background-color: #ffffff;
+    color: var(--cor-primaria);
+    border: 1px solid var(--cor-primaria);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn-outline:hover {
+    background-color: #f0f4f9;
+}
+
+.action-btn-primary {
+    font-family: inherit;
+    background-color: #059669;
+    color: #ffffff;
+    border: 1px solid #059669;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn-primary:hover {
+    background-color: #047857;
+    border-color: #047857;
+}
+
+.tabela-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+}
+
+.tabela-dados {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    text-align: left;
+}
+
+.tabela-dados th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--cor-borda);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tabela-dados td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+.tabela-dados tbody tr:hover td {
+    background-color: #f8fafc;
+}
+
+.tabela-dados tr.linha-anomalia td {
+    background-color: #fff9f9;
+}
+
+.tabela-vazia {
+    text-align: center;
+    padding: 30px;
+    color: var(--cor-texto-suave);
+    font-style: italic;
+}
+
+.badge-status-tabela {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+
+.badge-conforme {
+    background-color: var(--cor-verde-fundo);
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-fora {
+    background-color: var(--cor-vermelho-fundo);
+    color: #b91c1c;
+    border: 1px solid #fecaca;
 }
 
 /* ==========================================================================
@@ -616,7 +803,8 @@ header {
     .room-selector { width: 100%; }
     .room-btn { flex: 1; text-align: center; }
     .controles-barra { flex-direction: column; align-items: stretch; }
-    .filtros-grafico { width: 100%; justify-content: space-between; }
+    .filtros-grafico, .modo-tabs { width: 100%; justify-content: space-between; }
+    .tabela-actions { width: 100%; justify-content: space-between; }
 }
 
 /* ==========================================================================
