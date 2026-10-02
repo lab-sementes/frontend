@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="assets/images/setrem-favicon-32x32.png">
-    <title>Dashboard - Lab Sementes</title>
+    <title>Monitoramento - Laboratório de Sementes</title>
     
-    <!-- Conexão com o google fontes -->
+    <!-- Conexão com Google Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="style.css">
 
     <!-- Fontes -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -24,112 +24,180 @@
 </head>
 
 <body>
-    <!-- HEADER DO PROJETO -->
+    <!-- HEADER -->
     <header>
         <div class="header-content">
             <img src="assets/images/logo-setrem.png" alt="Logo da Setrem" class="header-content-logo">
             
-            <h1><i class="mdi mdi-sprout"></i> Dashboard</h1>
+            <h1><i class="mdi mdi-sprout"></i> Lab Sementes</h1>
         
             <div class="header-content-actions">
-                <button id="config-open-btn" class="header-content-actions-config-button">
-                    <a href="html/configurar-sensores.html"><span class="mdi mdi-cog"></span></a>
-                </button>
+                <a id="config-open-btn" class="header-content-actions-config-button" href="html/configurar-sensores.html" title="Configurar Sensores">
+                    <span class="mdi mdi-cog"></span>
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Seletor de Salas -->
+    <!-- Seletor de Salas e Status -->
     <div class="room-selector-container">
-        <h2 id="room-title">Monitorando: Sala de Amostras</h2>
-        <div class="room-selector">
-            <button class="room-btn active" data-room="amostras">
-                <i class="fa-solid fa-flask-vial"></i> Sala de Amostras
-            </button>
-            <button class="room-btn" data-room="geladeiras">
+        <div class="room-header-info">
+            <h2 id="room-title">Sala de Geladeiras</h2>
+            <div id="sensor-status-badge" class="sensor-status-badge status-carregando">
+                <span class="status-dot"></span>
+                <span id="sensor-status-text">Conectando...</span>
+            </div>
+        </div>
+
+        <div class="room-selector" id="room-selector-buttons">
+            <button class="room-btn active" data-room="geladeiras">
                 <i class="fa-solid fa-snowflake"></i> Sala de Geladeiras
             </button>
+            <button class="room-btn" data-room="amostras">
+                <i class="fa-solid fa-flask-vial"></i> Sala de Amostras
+            </button>
+        </div>
+    </div>
+
+    <!-- Aviso Simples de Sem Sinal -->
+    <div id="offline-alert-banner" class="aviso-amigavel" style="display: none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="aviso-texto">
+            <span id="offline-alert-desc">Aparelho sem sinal.</span>
+        </div>
+    </div>
+
+    <!-- Seletor de Equipamentos / Sensores da Sala -->
+    <div id="sensor-tabs-container" class="sensor-tabs-container" style="display: none;">
+        <span class="sensor-tabs-label"><i class="fa-solid fa-temperature-three-quarters"></i> Visualizar:</span>
+        <div id="sensor-tabs-buttons" class="sensor-tabs-buttons">
+            <!-- Gerado dinamicamente: Comparativo, Geladeira 1, 2, 3, Ambiente -->
         </div>
     </div>
     
     <main class="dashboard-container">
 
-<!--        <aside class="coluna-alertas">-->
-<!--            <h2><i class="fa-solid fa-bell"></i> Log de Alertas (ISO)</h2>-->
-<!--            <div class="log-alertas-wrapper">-->
-<!--                <ul id="lista-alertas">-->
-<!--                    <li class="alerta-info"></li>-->
-<!--                </ul>-->
-<!--            </div>-->
-<!--        </aside>-->
-
+        <!-- Área Principal de Conteúdo -->
         <section class="coluna-graficos">
             
-            <div class="filtros-grafico">
-                <button class="filtro-btn active" data-periodo="6h">Últimas 6h</button>
-                <button class="filtro-btn" data-periodo="24h">Últimas 24h</button>
-                <button class="filtro-btn" data-periodo="7d">Últimos 7d</button>
+            <!-- Barra Superior: Filtro de Período e Alternador de Visão -->
+            <div class="controles-barra">
+                <!-- Filtros de Período -->
+                <div class="filtros-grafico">
+                    <span class="filtro-rotulo">Período:</span>
+                    <button class="filtro-btn" data-periodo="6h">6 horas</button>
+                    <button class="filtro-btn active" data-periodo="24h">24 horas</button>
+                    <button class="filtro-btn" data-periodo="7d">7 dias</button>
+                </div>
             </div>
 
-            <div class="grafico-wrapper">
-                <h2><i class="fa-solid fa-chart-line"></i> Histórico de Temperatura</h2>
-                <canvas id="grafico-temperatura"></canvas>
+            <!-- VISÃO 1: GRÁFICOS -->
+            <div id="visao-graficos">
+                <!-- Gráfico de Temperatura -->
+                <div class="grafico-wrapper" id="wrapper-grafico-temp">
+                    <div class="grafico-header">
+                        <h2 id="titulo-grafico-temp"><i class="fa-solid fa-temperature-half"></i> Histórico de Temperatura</h2>
+                        <span class="faixa-legenda" id="legenda-temp-faixa">Faixa ideal: 2°C a 8°C</span>
+                    </div>
+
+                    <!-- Mensagem quando não houver dados no período -->
+                    <div id="aviso-grafico-temp-vazio" class="grafico-vazio-aviso" style="display: none;">
+                        <i class="fa-solid fa-signal-slash"></i>
+                        <p id="texto-grafico-temp-vazio">Nenhuma medição recebida neste período.</p>
+                        <span id="subtexto-grafico-temp-vazio">O aparelho está sem sinal recente.</span>
+                        <div id="acao-ver-historico-queda" style="margin-top: 12px; display: none;">
+                            <button id="btn-carregar-historico-antigo" class="btn-link-historico">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Ver últimas medições gravadas antes da queda (07/09)
+                            </button>
+                        </div>
+                    </div>
+
+                    <canvas id="grafico-temperatura"></canvas>
+                </div>
+                
+                <!-- Gráfico de Umidade (Ocultado inteligentemente quando em geladeiras) -->
+                <div class="grafico-wrapper" id="wrapper-grafico-umidade">
+                    <div class="grafico-header">
+                        <h2 id="titulo-grafico-umid"><i class="fa-solid fa-droplet"></i> Histórico de Umidade (Ambiente)</h2>
+                        <span class="faixa-legenda" id="legenda-umid-faixa">Faixa ideal: 40% a 60%</span>
+                    </div>
+
+                    <div id="aviso-grafico-umid-vazio" class="grafico-vazio-aviso" style="display: none;">
+                        <i class="fa-solid fa-signal-slash"></i>
+                        <p>Nenhuma medição de umidade recebida neste período.</p>
+                    </div>
+
+                    <canvas id="grafico-umidade"></canvas>
+                </div>
             </div>
-            
-            <div class="grafico-wrapper">
-                <h2><i class="fa-solid fa-chart-line"></i> Histórico de Umidade</h2>
-                <canvas id="grafico-umidade"></canvas>
-            </div>
+
         </section>
 
+        <!-- Barra Lateral: Leituras Atuais e Resumo -->
         <aside class="coluna-estatisticas">
-            <h2><i class="fa-solid fa-chart-pie"></i> Análise (24h)</h2>
+            <h2 id="estatisticas-titulo"><i class="fa-solid fa-temperature-high"></i> Agora no Laboratório</h2>
             
-            <div class="card" id="card-temp"> 
-                <div class="card-icon"><i class="fa-solid fa-temperature-half"></i></div>
-                <div class="card-content">
-                    <h2>Temperatura Atual</h2>
-                    <p class="dado"><span id="temp-atual">--</span> °C</p>
+            <!-- Cards de Leituras Atuais -->
+            <div id="cards-leituras-container">
+                <!-- Preenchido dinamicamente com cards claros -->
+            </div>
+
+            <!-- Resumo Amigável do Período -->
+            <div class="resumo-painel">
+                <div class="resumo-painel-header">
+                    <h3><i class="fa-solid fa-circle-info"></i> Resumo do Período</h3>
+                    <span id="taxa-conformidade-badge" class="badge-resumo-ok">--% no padrão</span>
+                </div>
+                
+                <div class="resumo-item">
+                    <span class="resumo-label">Faixa Ideal:</span>
+                    <strong id="resumo-faixa-ideal" class="resumo-valor">--</strong>
+                </div>
+
+                <div class="resumo-item">
+                    <span class="resumo-label">Temperatura Média:</span>
+                    <strong id="temp-media" class="resumo-valor">-- °C</strong>
+                </div>
+
+                <div class="resumo-duplo">
+                    <div class="resumo-subitem">
+                        <span class="sub-label">Mínima:</span>
+                        <strong id="temp-min" class="sub-valor">-- °C</strong>
+                    </div>
+                    <div class="resumo-subitem">
+                        <span class="sub-label">Máxima:</span>
+                        <strong id="temp-max" class="sub-valor">-- °C</strong>
+                    </div>
+                </div>
+
+                <!-- Bloco de Umidade (aparece apenas quando a sala/sensor mede umidade) -->
+                <div id="resumo-umidade-bloco" style="display: none;">
+                    <div class="resumo-divisor"></div>
+                    <div class="resumo-item">
+                        <span class="resumo-label">Umidade Média:</span>
+                        <strong id="umid-media" class="resumo-valor">-- %</strong>
+                    </div>
+                    <div class="resumo-duplo">
+                        <div class="resumo-subitem">
+                            <span class="sub-label">Mínima:</span>
+                            <strong id="umid-min" class="sub-valor">-- %</strong>
+                        </div>
+                        <div class="resumo-subitem">
+                            <span class="sub-label">Máxima:</span>
+                            <strong id="umid-max" class="sub-valor">-- %</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card" id="card-umid">
-                <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
-                <div class="card-content">
-                    <h2>Umidade Atual</h2>
-                    <p class="dado"><span id="umid-atual">--</span> %</p>
-                </div>
-            </div>
-            
-            <div class="card-estatistica">
-                <h3>Temp. Média (24h)</h3>
-                <p><span id="temp-media">--</span> °C</p>
-            </div>
-            <div class="card-estatistica">
-                <h3>Temp. Máxima (24h)</h3>
-                <p><span id="temp-max">--</span> °C</p>
-            </div>
-            <div class="card-estatistica">
-                <h3>Temp. Mínima (24h)</h3>
-                <p><span id="temp-min">--</span> °C</p>
-            </div>
-            <div class="card-estatistica">
-                <h3>Umid. Média (24h)</h3>
-                <p><span id="umid-media">--</span> %</p>
-            </div>
-            <div class="card-estatistica">
-                <h3>Umid. Máxima (24h)</h3>
-                <p><span id="umid-max">--</span> %</p>
-            </div>
-            <div class="card-estatistica">
-                <h3>Umid. Mínima (24h)</h3>
-                <p><span id="umid-min">--</span> %</p>
+
+            <div class="dica-laboratorio">
+                <i class="fa-solid fa-lightbulb"></i>
+                <small>Clique em uma geladeira acima para focar os gráficos e registros apenas nela.</small>
             </div>
         </aside>
 
     </main>
-</body>
 
-    
     <!-- Scripts de Terceiros -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
