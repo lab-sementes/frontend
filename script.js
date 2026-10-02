@@ -825,6 +825,7 @@ function renderizarGraficoTemperaturaComparativo(labels, datasets, tempMin, temp
         data: { labels, datasets },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 tooltip: {
@@ -907,6 +908,7 @@ function renderizarGraficoTemperaturaIndividual(labels, dataTemp, nomeEquipament
         data: { labels, datasets: dataset },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 tooltip: {
@@ -989,6 +991,7 @@ function renderizarGraficoUmidade(labels, dataHum, limiares) {
         data: { labels, datasets: dataset },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 tooltip: {
