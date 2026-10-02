@@ -288,6 +288,52 @@ function obterNomeAmigavel(sensor) {
     return nome.replace(/DHT11|DHT22|DS18B20/gi, '').trim() || nome;
 }
 
+function obterLimiaresSensor(sensor) {
+    if (!sensor) {
+        return {
+            tempMin: 18.0,
+            tempMax: 24.0,
+            umidMin: 40.0,
+            umidMax: 60.0,
+            isGeladeira: false,
+            rotuloTemp: '18°C a 24°C',
+            rotuloUmid: '40% a 60%'
+        };
+    }
+
+    const isGeladeira = sensor.sensorType === 'DS18B20' || (sensor.sensorName || '').toLowerCase().includes('geladeira');
+
+    let tMin = sensor.tempMin !== null && sensor.tempMin !== undefined ? Number(sensor.tempMin) : null;
+    let tMax = sensor.tempMax !== null && sensor.tempMax !== undefined ? Number(sensor.tempMax) : null;
+    let uMin = sensor.umidMin !== null && sensor.umidMin !== undefined ? Number(sensor.umidMin) : null;
+    let uMax = sensor.umidMax !== null && sensor.umidMax !== undefined ? Number(sensor.umidMax) : null;
+
+    if (tMin === null || tMax === null) {
+        if (isGeladeira) {
+            tMin = 2.0;
+            tMax = 8.0;
+        } else {
+            tMin = 18.0;
+            tMax = 24.0;
+        }
+    }
+
+    if (uMin === null || uMax === null) {
+        uMin = 40.0;
+        uMax = 60.0;
+    }
+
+    return {
+        tempMin: tMin,
+        tempMax: tMax,
+        umidMin: uMin,
+        umidMax: uMax,
+        isGeladeira,
+        rotuloTemp: `${tMin}°C a ${tMax}°C`,
+        rotuloUmid: `${uMin}% a ${uMax}%`
+    };
+}
+
 // ==========================================================================
 // BOTÕES DE EQUIPAMENTOS DA SALA (CHIPS LIMPOS)
 // ==========================================================================
@@ -434,13 +480,14 @@ function renderizarCardsLaterais(sensores) {
             let statusTexto = 'Normal';
             let statusClasse = 'ok';
 
+            const limiares = obterLimiaresSensor(s);
             if (leitura && leitura.temperature !== null) {
                 const t = leitura.temperature;
-                if (t < infoSala.tempMin) {
-                    statusTexto = `${(infoSala.tempMin - t).toFixed(1)}°C abaixo`;
+                if (t < limiares.tempMin) {
+                    statusTexto = `${(limiares.tempMin - t).toFixed(1)}°C abaixo`;
                     statusClasse = 'alerta';
-                } else if (t > infoSala.tempMax) {
-                    statusTexto = `${(t - infoSala.tempMax).toFixed(1)}°C acima`;
+                } else if (t > limiares.tempMax) {
+                    statusTexto = `${(t - limiares.tempMax).toFixed(1)}°C acima`;
                     statusClasse = 'alerta';
                 }
             }
@@ -472,7 +519,8 @@ function renderizarCardsLaterais(sensores) {
         });
     } else {
         const sensor = sensores[0];
-        const leitura = leiturasAtuaisCache[sensor.id];
+        const limiares = obterLimiaresSensor(sensor);
+        const leitura = leiturasAtuaisCache[sensor ? sensor.id : null];
         const temp = leitura && leitura.temperature !== null ? Number(leitura.temperature).toFixed(1) : '--';
         const umid = leitura && leitura.humidity !== null ? Number(leitura.humidity).toFixed(1) + '%' : '--';
 
@@ -480,7 +528,7 @@ function renderizarCardsLaterais(sensores) {
         let statusClasse = 'ok';
         if (leitura && leitura.temperature !== null) {
             const t = leitura.temperature;
-            if (t < infoSala.tempMin || t > infoSala.tempMax) {
+            if (t < limiares.tempMin || t > limiares.tempMax) {
                 statusTexto = 'Fora do ideal';
                 statusClasse = 'alerta';
             }
@@ -607,7 +655,17 @@ async function carregarDadosComparativoGeladeiras(sensores, bucket) {
 
     const labels = timestampsOrdenados.map(ts => formatarLabelEixo(ts, periodoAtual));
 
-    const datasetsTemp = resultados.map((r, idx) => {
+    // No gráfico comparativo de temperatura:
+    // Se a sala possui refrigeradores (DS18B20), comparamos os refrigeradores entre si (2°C a 8°C).
+    // O sensor de ambiente (DHT11) é exibido no gráfico de umidade logo abaixo e na aba individual "Ambiente".
+    const sensoresGeladeiras = resultados.filter(r => r.sensor.sensorType === 'DS18B20' || (r.sensor.sensorName || '').toLowerCase().includes('geladeira'));
+    const sensoresParaGrafico = sensoresGeladeiras.length > 0 ? sensoresGeladeiras : resultados;
+
+    const limiaresGrafico = sensoresGeladeiras.length > 0 
+        ? obterLimiaresSensor(sensoresGeladeiras[0].sensor) 
+        : obterLimiaresSensor(resultados[0]?.sensor);
+
+    const datasetsTemp = sensoresParaGrafico.map((r, idx) => {
         const mapaHoraValor = {};
         r.dadosCronologicos.forEach(d => {
             mapaHoraValor[d.hora] = d.media !== null ? Number(d.media.toFixed(1)) : null;
@@ -626,16 +684,17 @@ async function carregarDadosComparativoGeladeiras(sensores, bucket) {
         };
     });
 
-    renderizarGraficoTemperaturaComparativo(labels, datasetsTemp, infoSala.tempMin, infoSala.tempMax);
+    renderizarGraficoTemperaturaComparativo(labels, datasetsTemp, limiaresGrafico.tempMin, limiaresGrafico.tempMax);
 
     // Umidade Ambiente
     const wrapperUmid = document.getElementById('wrapper-grafico-umidade');
     if (wrapperUmid) wrapperUmid.style.display = 'block';
 
     if (sensorAmbiente && sensorAmbiente.dadosCronologicos.length > 0) {
+        const limiaresAmbiente = obterLimiaresSensor(sensorAmbiente.sensor);
         const labelsUmid = sensorAmbiente.dadosCronologicos.map(d => formatarLabelEixo(d.hora, periodoAtual));
         const hums = sensorAmbiente.dadosCronologicos.map(d => d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null);
-        renderizarGraficoUmidade(labelsUmid, hums, infoSala);
+        renderizarGraficoUmidade(labelsUmid, hums, limiaresAmbiente);
     }
 
     montarTabelaMultiplos(resultados, infoSala);
@@ -646,16 +705,15 @@ async function carregarDadosComparativoGeladeiras(sensores, bucket) {
 // DADOS: EQUIPAMENTO INDIVIDUAL
 // ==========================================================================
 async function carregarDadosEquipamentoIndividual(sensorObj, bucket) {
-    const infoSala = salasCadastradas[salaAtual] || LIMITES_PADRAO.amostras;
+    const limiares = obterLimiaresSensor(sensorObj);
     const wrapperUmid = document.getElementById('wrapper-grafico-umidade');
-    const isGeladeira = sensorObj.sensorType === 'DS18B20';
     const avisoTempVazio = document.getElementById('aviso-grafico-temp-vazio');
     const canvasTemp = document.getElementById('grafico-temperatura');
     const acaoVerQueda = document.getElementById('acao-ver-historico-queda');
     const btnHistoricoAntigo = document.getElementById('btn-carregar-historico-antigo');
     const tituloGrafico = document.getElementById('titulo-grafico-temp');
 
-    if (isGeladeira) {
+    if (limiares.isGeladeira) {
         if (wrapperUmid) wrapperUmid.style.display = 'none';
     } else {
         if (wrapperUmid) wrapperUmid.style.display = 'block';
@@ -724,14 +782,14 @@ async function carregarDadosEquipamentoIndividual(sensorObj, bucket) {
     const hums = historicoCronologico.map(h => h.media_umidade !== null ? Number(h.media_umidade.toFixed(1)) : null);
 
     const nomeAmigavel = obterNomeAmigavel(sensorObj);
-    renderizarGraficoTemperaturaIndividual(labels, temps, nomeAmigavel, infoSala);
+    renderizarGraficoTemperaturaIndividual(labels, temps, nomeAmigavel, limiares);
 
-    if (!isGeladeira) {
-        renderizarGraficoUmidade(labels, hums, infoSala);
+    if (!limiares.isGeladeira) {
+        renderizarGraficoUmidade(labels, hums, limiares);
     }
 
-    montarTabelaIndividual(historicoFiltrado, nomeAmigavel, infoSala, isGeladeira);
-    calcularResumoIndividual(temps, hums, infoSala, isGeladeira);
+    montarTabelaIndividual(historicoFiltrado, nomeAmigavel, limiares);
+    calcularResumoIndividual(temps, hums, limiares);
 }
 
 function mostrarEstadoVazio(sensorObj) {
@@ -817,9 +875,9 @@ function renderizarGraficoTemperaturaComparativo(labels, datasets, tempMin, temp
 // ==========================================================================
 // RENDERIZAR GRÁFICO INDIVIDUAL
 // ==========================================================================
-function renderizarGraficoTemperaturaIndividual(labels, dataTemp, nomeEquipamento, infoSala) {
+function renderizarGraficoTemperaturaIndividual(labels, dataTemp, nomeEquipamento, limiares) {
     const ctx = document.getElementById('grafico-temperatura').getContext('2d');
-    const { tempMin, tempMax } = infoSala;
+    const { tempMin, tempMax } = limiares;
 
     const pointColors = dataTemp.map(val => {
         if (val === null) return '#2563eb';
@@ -899,9 +957,9 @@ function renderizarGraficoTemperaturaIndividual(labels, dataTemp, nomeEquipament
 // ==========================================================================
 // RENDERIZAR GRÁFICO DE UMIDADE
 // ==========================================================================
-function renderizarGraficoUmidade(labels, dataHum, infoSala) {
+function renderizarGraficoUmidade(labels, dataHum, limiares) {
     const ctx = document.getElementById('grafico-umidade').getContext('2d');
-    const { umidMin, umidMax } = infoSala;
+    const { umidMin, umidMax } = limiares;
 
     const pointColors = dataHum.map(val => {
         if (val === null) return '#0284c7';
@@ -964,7 +1022,8 @@ function montarTabelaMultiplos(resultados, infoSala) {
 
     resultados.forEach(r => {
         const nomeAmigavel = obterNomeAmigavel(r.sensor);
-        const temUmid = r.sensor.sensorType !== 'DS18B20';
+        const limiares = obterLimiaresSensor(r.sensor);
+        const temUmid = !limiares.isGeladeira;
 
         r.dadosCronologicos.forEach(d => {
             const temp = d.media !== null ? Number(d.media.toFixed(1)) : null;
@@ -974,8 +1033,8 @@ function montarTabelaMultiplos(resultados, infoSala) {
             let fora = false;
 
             if (temp !== null) {
-                if (temp < infoSala.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
-                if (temp > infoSala.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
+                if (temp < limiares.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
+                if (temp > limiares.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
             }
 
             dadosTabelaAtual.push({
@@ -993,17 +1052,17 @@ function montarTabelaMultiplos(resultados, infoSala) {
     renderizarTabelaHistorica();
 }
 
-function montarTabelaIndividual(historicoFiltrado, nomeEquipamento, infoSala, isGeladeira) {
+function montarTabelaIndividual(historicoFiltrado, nomeEquipamento, limiares) {
     dadosTabelaAtual = historicoFiltrado.map(d => {
         const temp = d.media !== null ? Number(d.media.toFixed(1)) : null;
-        const umid = !isGeladeira && d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null;
+        const umid = !limiares.isGeladeira && d.media_umidade !== null ? Number(d.media_umidade.toFixed(1)) : null;
 
         let situacao = 'Normal';
         let fora = false;
 
         if (temp !== null) {
-            if (temp < infoSala.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
-            if (temp > infoSala.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
+            if (temp < limiares.tempMin) { situacao = `Temp Baixa (${temp}°C)`; fora = true; }
+            if (temp > limiares.tempMax) { situacao = `Temp Alta (${temp}°C)`; fora = true; }
         }
 
         return {
@@ -1011,7 +1070,7 @@ function montarTabelaIndividual(historicoFiltrado, nomeEquipamento, infoSala, is
             dataHoraFormatada: formatarDataHoraAmigavel(d.hora),
             local: nomeEquipamento,
             temperatura: temp !== null ? `${temp} °C` : '--',
-            umidade: !isGeladeira ? (umid !== null ? `${umid} %` : '--') : 'N/A',
+            umidade: !limiares.isGeladeira ? (umid !== null ? `${umid} %` : '--') : 'N/A',
             isConforme: !fora,
             situacao
         };
@@ -1094,14 +1153,15 @@ function calcularResumoGeral(resultados, infoSala, temUmidadeNaSala) {
     let conformes = 0;
 
     resultados.forEach(r => {
+        const limiares = obterLimiaresSensor(r.sensor);
         r.dadosCronologicos.forEach(d => {
             if (d.media !== null) {
                 const t = Number(d.media);
                 todasTemps.push(t);
                 total++;
-                if (t >= infoSala.tempMin && t <= infoSala.tempMax) conformes++;
+                if (t >= limiares.tempMin && t <= limiares.tempMax) conformes++;
             }
-            if (r.sensor.sensorType === 'DHT11' && d.media_umidade !== null) {
+            if (!limiares.isGeladeira && d.media_umidade !== null) {
                 todasUmid.push(Number(d.media_umidade));
             }
         });
@@ -1110,14 +1170,14 @@ function calcularResumoGeral(resultados, infoSala, temUmidadeNaSala) {
     atualizarPainelResumo(todasTemps, todasUmid, conformes, total, temUmidadeNaSala);
 }
 
-function calcularResumoIndividual(temps, hums, infoSala, isGeladeira) {
+function calcularResumoIndividual(temps, hums, limiares) {
     const tempsValidos = temps.filter(t => t !== null);
-    const humsValidos = isGeladeira ? [] : hums.filter(h => h !== null);
+    const humsValidos = limiares.isGeladeira ? [] : hums.filter(h => h !== null);
 
     let total = tempsValidos.length;
-    let conformes = tempsValidos.filter(t => t >= infoSala.tempMin && t <= infoSala.tempMax).length;
+    let conformes = tempsValidos.filter(t => t >= limiares.tempMin && t <= limiares.tempMax).length;
 
-    atualizarPainelResumo(tempsValidos, humsValidos, conformes, total, !isGeladeira);
+    atualizarPainelResumo(tempsValidos, humsValidos, conformes, total, !limiares.isGeladeira);
 }
 
 function atualizarPainelResumo(temps, hums, conformes, total, temUmidade) {
@@ -1209,8 +1269,26 @@ function atualizarTextosFaixaIdeal() {
     const infoSala = salasCadastradas[salaAtual] || LIMITES_PADRAO.geladeiras;
 
     const legendaTemp = document.getElementById('legenda-temp-faixa');
+    const legendaUmid = document.getElementById('legenda-umid-faixa');
     const resumoFaixa = document.getElementById('resumo-faixa-ideal');
 
-    if (legendaTemp) legendaTemp.innerText = `Faixa ideal: ${infoSala.rotulo}`;
-    if (resumoFaixa) resumoFaixa.innerText = infoSala.rotulo;
+    if (subSensorAtual === 'todos') {
+        if (salaAtual.includes('geladeira')) {
+            if (legendaTemp) legendaTemp.innerText = 'Faixa ideal (Geladeiras): 2°C a 8°C';
+            if (legendaUmid) legendaUmid.innerText = 'Faixa ideal (Ambiente): 40% a 60%';
+            if (resumoFaixa) resumoFaixa.innerText = 'Geladeiras: 2°C a 8°C | Ambiente: 18°C a 24°C';
+        } else {
+            if (legendaTemp) legendaTemp.innerText = `Faixa ideal: ${infoSala.rotulo}`;
+            if (legendaUmid) legendaUmid.innerText = 'Faixa ideal: 40% a 60%';
+            if (resumoFaixa) resumoFaixa.innerText = `${infoSala.rotulo} (40% a 60%)`;
+        }
+    } else {
+        const sensor = todosSensores.find(s => String(s.id) === subSensorAtual);
+        const limiares = obterLimiaresSensor(sensor);
+        if (legendaTemp) legendaTemp.innerText = `Faixa ideal: ${limiares.rotuloTemp}`;
+        if (legendaUmid) legendaUmid.innerText = `Faixa ideal: ${limiares.rotuloUmid}`;
+        if (resumoFaixa) {
+            resumoFaixa.innerText = limiares.isGeladeira ? limiares.rotuloTemp : `${limiares.rotuloTemp} (${limiares.rotuloUmid})`;
+        }
+    }
 }
